@@ -319,7 +319,7 @@ with st.expander("How does it actually work, and is there anything to note?"):
     st.markdown(
         "It fetches pages using ScraperAPI, so keep in mind that some websites might occasionally "
         "block the request or time out.\n\n"
-        "The tool currently runs on a free account with 1,000 credits per month (1 credit per URL). "
-        "If you're processing a large batch and need more volume, you can easily plug in your own "
-        "API key under **Use your own ScraperAPI Key**."
+        "The tool currently runs on a free account with 1,000 credits per month. Most URLs use 1 credit, "
+        "though some websites may use more. If you're processing a large batch and need more volume, "
+        "you can easily plug in your own API key under **Use your own ScraperAPI Key**."
     )
