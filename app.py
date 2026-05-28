@@ -8,7 +8,7 @@ import time
 st.set_page_config(
     page_title="Citation & Brand Mention Checker",
     page_icon="🔍",
-    layout="centered"
+    layout="wide"
 )
 
 st.title("🔍 Citation & Brand Mention Checker")
@@ -29,7 +29,7 @@ with st.expander("⚙️ Use your own ScraperAPI Key (optional)", expanded=not b
         "Your ScraperAPI Key",
         value="",
         type="password",
-        help="Leave blank to use the default key. Get your own free key at scraperapi.com — 1,000 requests/month."
+        help="Leave blank to use the default key. Get your own free key at scraperapi.com, 1,000 requests/month."
     )
 api_key = custom_key.strip() if custom_key.strip() else default_key
 
@@ -55,6 +55,10 @@ urls_input = st.text_area(
 )
 
 run_btn = st.button("▶  Run Check", type="primary", use_container_width=True)
+
+# --- Session state for persistent results ---
+if "results_df" not in st.session_state:
+    st.session_state.results_df = None
 
 
 # --- Helpers ---
@@ -159,18 +163,26 @@ if run_btn:
         status.empty()
         progress.empty()
 
-        df = pd.DataFrame(results)
+        st.session_state.results_df = pd.DataFrame(results)
 
-        st.success(f"Done! Checked {len(urls)} URL{'s' if len(urls) > 1 else ''}.")
-        st.dataframe(df, use_container_width=True, hide_index=True)
+# --- Display results (persists until new run) ---
+if st.session_state.results_df is not None:
+    df = st.session_state.results_df
+    st.success(f"Results — {len(df)} URL{'s' if len(df) > 1 else ''} checked.")
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "URL": st.column_config.TextColumn("URL", width="large"),
+            "Brand Mentioned": st.column_config.TextColumn("Brand Mentioned", width="small"),
+            "Mention Count": st.column_config.TextColumn("Count", width="small"),
+            "Domain Cited": st.column_config.TextColumn("Domain Cited", width="small"),
+            "Citation Count": st.column_config.TextColumn("Citations", width="small"),
+            "Context Snippet": st.column_config.TextColumn("Context Snippet", width="large"),
+        }
+    )
 
-        # Download CSV — bottom left
-        col_left, _, _ = st.columns([1, 1, 1])
-        with col_left:
-            csv = df.to_csv(index=False).encode("utf-8")
-            st.download_button(
-                "⬇ Copy / Download CSV",
-                data=csv,
-                file_name="brand_mention_check.csv",
-                mime="text/csv",
-            )
+    st.caption("📋 Copy table for Google Sheets — click the copy icon in the top-right of the box below, then paste directly into Sheets.")
+    tsv = df.to_csv(sep="\t", index=False)
+    st.code(tsv, language=None)
