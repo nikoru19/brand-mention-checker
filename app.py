@@ -14,15 +14,24 @@ st.set_page_config(
 st.title("🔍 Citation & Brand Mention Checker")
 st.caption("Check if your client's brand and website are mentioned across a list of URLs.")
 
+st.info(
+    "Hey! This tool is running on Nicole's free ScraperAPI credits, so feel free to test it out. "
+    "If you're planning to use it regularly or with larger batches, I'd really appreciate if you grabbed "
+    "your own free API key at [scraperapi.com](https://www.scraperapi.com/), it's free, takes 2 minutes, "
+    "and gives you 1,000 requests/month. Just paste your key in the field below. Thanks for trying it out! 🙌",
+    icon="💡"
+)
+
 # --- API Key ---
 default_key = st.secrets.get("SCRAPERAPI_KEY", "")
-with st.expander("⚙️ ScraperAPI Key", expanded=not bool(default_key)):
-    api_key = st.text_input(
-        "ScraperAPI Key",
-        value=default_key,
+with st.expander("⚙️ Use your own ScraperAPI Key (optional)", expanded=not bool(default_key)):
+    custom_key = st.text_input(
+        "Your ScraperAPI Key",
+        value="",
         type="password",
-        help="Get your free key at scraperapi.com — 1,000 requests/month free tier available."
+        help="Leave blank to use the default key. Get your own free key at scraperapi.com — 1,000 requests/month."
     )
+api_key = custom_key.strip() if custom_key.strip() else default_key
 
 st.divider()
 
