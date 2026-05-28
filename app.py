@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import re
 import pandas as pd
 import base64
+import html as html_lib
 import time
 
 st.set_page_config(
@@ -20,27 +21,6 @@ st.markdown(
         max-width: 1100px;
         padding-left: 2rem;
         padding-right: 2rem;
-    }
-    /* Wrap text in results table */
-    [data-testid="stTable"] table {
-        table-layout: fixed;
-        width: 100%;
-    }
-    [data-testid="stTable"] td,
-    [data-testid="stTable"] th {
-        white-space: normal !important;
-        word-break: break-all !important;
-        overflow-wrap: break-word !important;
-        vertical-align: top;
-    }
-    /* Give URL column more room, keep other columns compact */
-    [data-testid="stTable"] td:first-child,
-    [data-testid="stTable"] th:first-child {
-        width: 28%;
-    }
-    [data-testid="stTable"] td:last-child,
-    [data-testid="stTable"] th:last-child {
-        width: 30%;
     }
     </style>
     """,
@@ -230,17 +210,58 @@ if run_btn:
 if st.session_state.results_df is not None:
     df = st.session_state.results_df
     st.success(f"Results — {len(df)} URL{'s' if len(df) > 1 else ''} checked.")
-    st.table(df)
+
+    # Build table rows with all values HTML-escaped
+    headers_html = "".join(f"<th>{html_lib.escape(col)}</th>" for col in df.columns)
+    rows_html = ""
+    for _, row in df.iterrows():
+        cells = "".join(f"<td>{html_lib.escape(str(v))}</td>" for v in row)
+        rows_html += f"<tr>{cells}</tr>"
 
     tsv_b64 = base64.b64encode(df.to_csv(sep="\t", index=False).encode("utf-8")).decode("ascii")
+    row_height_est = 80
+    iframe_height = 55 + (len(df) * row_height_est) + 60
+
     components.html(f"""<!DOCTYPE html>
-<html><body style="margin:4px 0;padding:0;font-family:sans-serif;">
-<button id="btn" style="background:#ff4b4b;color:white;border:none;padding:7px 16px;
-    border-radius:6px;cursor:pointer;font-size:13px;">Copy table</button>
-<span style="color:#888;font-size:12px;margin-left:8px;">Paste directly into Google Sheets</span>
+<html>
+<head><style>
+* {{ box-sizing: border-box; margin: 0; padding: 0; }}
+body {{ font-family: "Source Sans Pro", sans-serif; font-size: 13px; padding: 4px 0 8px; }}
+table {{ width: 100%; border-collapse: collapse; table-layout: fixed; }}
+th {{
+    background: #f0f2f6; padding: 10px 12px; text-align: left;
+    font-weight: 600; border-bottom: 2px solid #dde; color: #333;
+}}
+td {{
+    padding: 10px 12px; border-bottom: 1px solid #e6e6e6;
+    vertical-align: top; word-break: break-all;
+    overflow-wrap: break-word; line-height: 1.5; color: #333;
+}}
+tr:hover td {{ background: #f9f9fb; }}
+/* Column widths */
+th:nth-child(1), td:nth-child(1) {{ width: 24%; }}
+th:nth-child(2), td:nth-child(2) {{ width: 11%; }}
+th:nth-child(3), td:nth-child(3) {{ width: 7%; }}
+th:nth-child(4), td:nth-child(4) {{ width: 11%; }}
+th:nth-child(5), td:nth-child(5) {{ width: 7%; }}
+th:nth-child(6), td:nth-child(6) {{ width: 40%; }}
+#copyBtn {{
+    margin-top: 12px; background: #ff4b4b; color: white;
+    border: none; padding: 7px 16px; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-family: inherit;
+}}
+.hint {{ color: #888; font-size: 12px; margin-left: 8px; }}
+</style></head>
+<body>
+<table>
+  <thead><tr>{headers_html}</tr></thead>
+  <tbody>{rows_html}</tbody>
+</table>
+<button id="copyBtn">Copy table</button>
+<span class="hint">Paste directly into Google Sheets</span>
 <script>
 var data = atob("{tsv_b64}");
-document.getElementById('btn').addEventListener('click', function() {{
+document.getElementById('copyBtn').addEventListener('click', function() {{
     var btn = this;
     var ta = document.createElement('textarea');
     ta.value = data;
@@ -254,4 +275,4 @@ document.getElementById('btn').addEventListener('click', function() {{
     setTimeout(function() {{ btn.textContent = 'Copy table'; }}, 2000);
 }});
 </script>
-</body></html>""", height=48)
+</body></html>""", height=iframe_height, scrolling=False)
