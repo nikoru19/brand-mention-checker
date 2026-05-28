@@ -11,6 +11,19 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown(
+    """
+    <style>
+    .block-container {
+        max-width: 1100px;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("🔍 Citation & Brand Mention Checker")
 st.caption("Check if your client's brand and website are mentioned across a list of URLs.")
 
