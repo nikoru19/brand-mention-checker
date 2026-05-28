@@ -1,8 +1,10 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import requests
 from bs4 import BeautifulSoup
 import re
 import pandas as pd
+import json
 import time
 
 st.set_page_config(
@@ -18,6 +20,15 @@ st.markdown(
         max-width: 1100px;
         padding-left: 2rem;
         padding-right: 2rem;
+    }
+    /* Wrap text in dataframe cells */
+    .stDataFrame div[class*="cell"],
+    .stDataFrame [role="gridcell"],
+    .stDataFrame .ag-cell {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.5 !important;
     }
     </style>
     """,
@@ -196,6 +207,18 @@ if st.session_state.results_df is not None:
         }
     )
 
-    st.caption("📋 Copy table for Google Sheets — click the copy icon in the top-right of the box below, then paste directly into Sheets.")
-    tsv = df.to_csv(sep="\t", index=False)
-    st.code(tsv, language=None)
+    tsv_json = json.dumps(df.to_csv(sep="\t", index=False))
+    components.html(f"""
+        <button
+            onclick="navigator.clipboard.writeText({tsv_json}).then(() => {{
+                this.innerText = '✅ Copied!';
+                setTimeout(() => this.innerText = '📋 Copy table', 2000);
+            }})"
+            style="background:#ff4b4b; color:white; border:none; padding:7px 16px;
+                   border-radius:6px; cursor:pointer; font-size:14px; font-family:sans-serif;">
+            📋 Copy table
+        </button>
+        <span style="font-size:12px; color:#888; margin-left:10px; font-family:sans-serif;">
+            Paste directly into Google Sheets
+        </span>
+    """, height=45)
