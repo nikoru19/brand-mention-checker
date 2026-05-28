@@ -93,7 +93,7 @@ def get_context(text, keyword, window=100):
     start = max(0, idx - window)
     end = min(len(text), idx + len(keyword) + window)
     snippet = text[start:end].replace("\n", " ").strip()
-    return "…" + snippet + "…"
+    return "..." + snippet + "..."
 
 
 def check_url(url, brand_variants, client_domain, api_key):
@@ -134,20 +134,20 @@ def check_url(url, brand_variants, client_domain, api_key):
 
         return {
             "URL": url,
-            "Brand Mentioned": "✅ Yes" if brand_count else "❌ No",
-            "Mention Count": brand_count if brand_count else "—",
-            "Domain Cited": "✅ Yes" if domain_count else "❌ No",
-            "Citation Count": domain_count if domain_count else "—",
-            "Context Snippet": brand_context or domain_context or "—",
+            "Brand Mentioned": "Yes" if brand_count else "No",
+            "Mention Count": brand_count if brand_count else 0,
+            "Domain Cited": "Yes" if domain_count else "No",
+            "Citation Count": domain_count if domain_count else 0,
+            "Context Snippet": brand_context or domain_context or "",
         }
 
     except Exception as e:
         return {
             "URL": url,
-            "Brand Mentioned": "⚠️ Error",
-            "Mention Count": "—",
-            "Domain Cited": "⚠️ Error",
-            "Citation Count": "—",
+            "Brand Mentioned": "Error",
+            "Mention Count": 0,
+            "Domain Cited": "Error",
+            "Citation Count": 0,
             "Context Snippet": str(e),
         }
 
