@@ -140,9 +140,9 @@ def check_url(url, brand_variants, client_domain, scraper_key):
 
         return {
             "URL": url,
-            "Brand Mentioned": "Yes" if brand_count else "No",
+            "Brand Mentioned": "TRUE" if brand_count else "FALSE",
             "Mention Count": brand_count,
-            "Domain Cited": "Yes" if domain_count else "No",
+            "Domain Cited": "TRUE" if domain_count else "FALSE",
             "Citation Count": domain_count,
             "Context Snippet": brand_context or domain_context or "",
         }
