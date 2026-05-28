@@ -108,30 +108,44 @@ def get_context(text, keyword, window=100):
     return "..." + snippet + "..."
 
 
-def check_url(url, brand_variants, client_domain, api_key):
+def check_url(url, brand_variants, client_domain, scraper_key):
     try:
         resp = requests.get(
             "http://api.scraperapi.com",
-            params={"api_key": api_key, "url": url},
+            params={"api_key": scraper_key, "url": url},
             timeout=30
         )
+
+        # Catch bad API key or access errors before parsing
+        if resp.status_code == 401:
+            raise ValueError("Invalid ScraperAPI key")
+        elif resp.status_code == 403:
+            raise ValueError("Access blocked by target site")
+        elif resp.status_code == 429:
+            raise ValueError("Rate limit reached")
+        elif resp.status_code >= 500:
+            raise ValueError(f"ScraperAPI server error ({resp.status_code})")
+
         soup = BeautifulSoup(resp.text, "html.parser")
         for tag in soup(["script", "style", "nav", "footer", "header"]):
             tag.decompose()
         text = re.sub(r"\s+", " ", soup.get_text(separator=" "))
 
-        # Brand check — longest variant first to avoid double-counting substrings
+        # Brand check — longest variant first, replace matched text with spaces
+        # so shorter variants don't double-count within already-matched strings
         variants_sorted = sorted(brand_variants, key=len, reverse=True)
-        text_lower = text.lower()
+        working_text = text.lower()
         brand_count = 0
         brand_context = ""
 
         for variant in variants_sorted:
-            count = text_lower.count(variant.lower())
+            v = variant.lower()
+            count = working_text.count(v)
             if count:
                 brand_count += count
                 if not brand_context:
                     brand_context = get_context(text, variant)
+                working_text = working_text.replace(v, " " * len(v))
 
         # Domain check — search raw HTML so href links are caught
         domain_clean = (
@@ -147,14 +161,24 @@ def check_url(url, brand_variants, client_domain, api_key):
         return {
             "URL": url,
             "Brand Mentioned": "Yes" if brand_count else "No",
-            "Mention Count": brand_count if brand_count else 0,
+            "Mention Count": brand_count,
             "Domain Cited": "Yes" if domain_count else "No",
-            "Citation Count": domain_count if domain_count else 0,
+            "Citation Count": domain_count,
             "Context Snippet": brand_context or domain_context or "",
         }
 
     except Exception as e:
-        err_msg = "Request timed out" if "timed out" in str(e).lower() else "Could not fetch page"
+        err_str = str(e).lower()
+        if "timed out" in err_str:
+            err_msg = "Request timed out"
+        elif "invalid scraperapi key" in err_str:
+            err_msg = "Invalid API key"
+        elif "rate limit" in err_str:
+            err_msg = "Rate limit reached"
+        elif "blocked" in err_str:
+            err_msg = "Access blocked by target site"
+        else:
+            err_msg = "Could not fetch page"
         return {
             "URL": url,
             "Brand Mentioned": "Error",
