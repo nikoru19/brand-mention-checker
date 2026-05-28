@@ -219,8 +219,15 @@ if st.session_state.results_df is not None:
         rows_html += f"<tr>{cells}</tr>"
 
     tsv_b64 = base64.b64encode(df.to_csv(sep="\t", index=False).encode("utf-8")).decode("ascii")
-    row_height_est = 80
-    iframe_height = 55 + (len(df) * row_height_est) + 60
+
+    # Estimate height per row based on actual content length
+    # Context column ~55 chars/line, URL column ~38 chars/line at this layout width
+    def est_row_height(row):
+        context_lines = max(1, len(str(row.get("Context Snippet", ""))) // 55)
+        url_lines = max(1, len(str(row.get("URL", ""))) // 38)
+        return max(52, max(context_lines, url_lines) * 22 + 28)
+
+    iframe_height = 60 + sum(est_row_height(r) for _, r in df.iterrows()) + 80
 
     components.html(f"""<!DOCTYPE html>
 <html>
@@ -311,7 +318,7 @@ with st.expander("How do I use this tool?"):
 with st.expander("How does it actually work, and is there anything to note?"):
     st.markdown(
         "It fetches pages using ScraperAPI, so keep in mind that some websites might occasionally "
-        "block the request or time out — that's normal and down to the site, not the tool.\n\n"
+        "block the request or time out.\n\n"
         "The tool currently runs on a free account with 1,000 credits per month (1 credit per URL). "
         "If you're processing a large batch and need more volume, you can easily plug in your own "
         "API key under **Use your own ScraperAPI Key**."
