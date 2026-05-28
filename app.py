@@ -22,13 +22,25 @@ st.markdown(
         padding-right: 2rem;
     }
     /* Wrap text in results table */
+    [data-testid="stTable"] table {
+        table-layout: fixed;
+        width: 100%;
+    }
     [data-testid="stTable"] td,
     [data-testid="stTable"] th {
         white-space: normal !important;
-        word-wrap: break-word !important;
+        word-break: break-all !important;
         overflow-wrap: break-word !important;
-        max-width: 380px;
         vertical-align: top;
+    }
+    /* Give URL column more room, keep other columns compact */
+    [data-testid="stTable"] td:first-child,
+    [data-testid="stTable"] th:first-child {
+        width: 28%;
+    }
+    [data-testid="stTable"] td:last-child,
+    [data-testid="stTable"] th:last-child {
+        width: 30%;
     }
     </style>
     """,
@@ -142,13 +154,14 @@ def check_url(url, brand_variants, client_domain, api_key):
         }
 
     except Exception as e:
+        err_msg = "Request timed out" if "timed out" in str(e).lower() else "Could not fetch page"
         return {
             "URL": url,
             "Brand Mentioned": "Error",
             "Mention Count": 0,
             "Domain Cited": "Error",
             "Citation Count": 0,
-            "Context Snippet": str(e),
+            "Context Snippet": err_msg,
         }
 
 
