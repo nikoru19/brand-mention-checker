@@ -276,3 +276,43 @@ document.getElementById('copyBtn').addEventListener('click', function() {{
 }});
 </script>
 </body></html>""", height=iframe_height, scrolling=False)
+
+# --- FAQ ---
+st.divider()
+st.markdown("### FAQs")
+
+with st.expander("What is this tool for?"):
+    st.markdown(
+        "It's a quick way to spot-check whether a client's brand or link is actually on a webpage. "
+        "It helps speed up your workflow by letting you verify URLs in bulk instead of opening them "
+        "one by one during citation audits."
+    )
+
+with st.expander("What problem does it solve?"):
+    st.markdown(
+        "The *pageMentioned* metrics in WorkDuo citation reports looks for text mentions via a general "
+        "crawl, but it doesn't verify if the actual domain is cited. This tool bridges that gap so you "
+        "can double-check the details and choose the best strategy for your clients.\n\n"
+        "It prevents two scenarios:\n\n"
+        "**1. The brand is mentioned on the page, but the citation analysis report returned FALSE** — "
+        "You can skip planning outreach for a site that already features the client.\n\n"
+        "**2. The report says the brand is listed, but the website isn't actually cited** — "
+        "You can identify a quick-win opportunity to reach out and request a direct link."
+    )
+
+with st.expander("How do I use this tool?"):
+    st.markdown(
+        "Drop in your URLs, the client's brand name, and their domain. It returns a table showing "
+        "whether the brand is mentioned or cited on each page.\n\n"
+        "If a client uses a few different name variations, you can check them all at once by "
+        "separating them with commas."
+    )
+
+with st.expander("How does it actually work, and is there anything to note?"):
+    st.markdown(
+        "It fetches pages using ScraperAPI, so keep in mind that some websites might occasionally "
+        "block the request or time out — that's normal and down to the site, not the tool.\n\n"
+        "The tool currently runs on a free account with 1,000 credits per month (1 credit per URL). "
+        "If you're processing a large batch and need more volume, you can easily plug in your own "
+        "API key under **Use your own ScraperAPI Key**."
+    )
