@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import pandas as pd
-import json
+import base64
 import time
 
 st.set_page_config(
@@ -21,14 +21,14 @@ st.markdown(
         padding-left: 2rem;
         padding-right: 2rem;
     }
-    /* Wrap text in dataframe cells */
-    .stDataFrame div[class*="cell"],
-    .stDataFrame [role="gridcell"],
-    .stDataFrame .ag-cell {
+    /* Wrap text in results table */
+    [data-testid="stTable"] td,
+    [data-testid="stTable"] th {
         white-space: normal !important;
-        word-break: break-word !important;
+        word-wrap: break-word !important;
         overflow-wrap: break-word !important;
-        line-height: 1.5 !important;
+        max-width: 380px;
+        vertical-align: top;
     }
     </style>
     """,
@@ -193,32 +193,28 @@ if run_btn:
 if st.session_state.results_df is not None:
     df = st.session_state.results_df
     st.success(f"Results — {len(df)} URL{'s' if len(df) > 1 else ''} checked.")
-    st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "URL": st.column_config.TextColumn("URL", width="large"),
-            "Brand Mentioned": st.column_config.TextColumn("Brand Mentioned", width="small"),
-            "Mention Count": st.column_config.TextColumn("Count", width="small"),
-            "Domain Cited": st.column_config.TextColumn("Domain Cited", width="small"),
-            "Citation Count": st.column_config.TextColumn("Citations", width="small"),
-            "Context Snippet": st.column_config.TextColumn("Context Snippet", width="large"),
-        }
-    )
+    st.table(df)
 
-    tsv_json = json.dumps(df.to_csv(sep="\t", index=False))
-    components.html(f"""
-        <button
-            onclick="navigator.clipboard.writeText({tsv_json}).then(() => {{
-                this.innerText = '✅ Copied!';
-                setTimeout(() => this.innerText = '📋 Copy table', 2000);
-            }})"
-            style="background:#ff4b4b; color:white; border:none; padding:7px 16px;
-                   border-radius:6px; cursor:pointer; font-size:14px; font-family:sans-serif;">
-            📋 Copy table
-        </button>
-        <span style="font-size:12px; color:#888; margin-left:10px; font-family:sans-serif;">
-            Paste directly into Google Sheets
-        </span>
-    """, height=45)
+    tsv_b64 = base64.b64encode(df.to_csv(sep="\t", index=False).encode("utf-8")).decode("ascii")
+    components.html(f"""<!DOCTYPE html>
+<html><body style="margin:4px 0;padding:0;font-family:sans-serif;">
+<button id="btn" style="background:#ff4b4b;color:white;border:none;padding:7px 16px;
+    border-radius:6px;cursor:pointer;font-size:13px;">Copy table</button>
+<span style="color:#888;font-size:12px;margin-left:8px;">Paste directly into Google Sheets</span>
+<script>
+var data = atob("{tsv_b64}");
+document.getElementById('btn').addEventListener('click', function() {{
+    var btn = this;
+    var ta = document.createElement('textarea');
+    ta.value = data;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    var ok = false;
+    try {{ ok = document.execCommand('copy'); }} catch(e) {{}}
+    document.body.removeChild(ta);
+    btn.textContent = ok ? 'Copied!' : 'Press Ctrl+C';
+    setTimeout(function() {{ btn.textContent = 'Copy table'; }}, 2000);
+}});
+</script>
+</body></html>""", height=48)
